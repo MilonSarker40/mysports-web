@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+.container{
+  max-width: 479px;
+  width: 100%;
+  margin: 0 auto;
+  background: #fff;
+}
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+
+
+
+/* cricket-slider.css */
+
+/* Allow the next slide to peek out (visible overflow) */
+.slider-cricket-videos .slick-list {
+  overflow: visible; /* show the partial next slide */
+  padding-left: 0;   /* ensure first slide is flush left */
+}
+
+/* keep slides aligned and let each slide size naturally */
+.slider-cricket-videos .slick-track {
+  display: flex;
+  align-items: stretch;
+}
+
+/* remove slick's default outline hack if present */
+.slider-cricket-videos .slick-slide {
+  height: auto;
+  padding-right: 0; /* we'll handle spacing inside each card */
+  box-sizing: border-box;
+}
+
+/* optional: tweak spacing between cards if needed */
+.slider-cricket-videos .slick-slide > div {
+  margin-right:5px; /* matches your card pr-3 spacing */
+}
+
+/* ensure mobile doesn't clip shadows / rounded corners */
+.slider-cricket-videos .slick-slide .w-full {
+  overflow: visible;
+}
+
+/* Ensure the next slide peeks out */
+.slider-cricket-videos .slick-list {
+  overflow: visible;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Keep the track as flex so slides size correctly */
+.slider-cricket-videos .slick-track {
+  display: flex;
+  align-items: stretch;
+}
+
+/* Gap between slides — matches pr-2 in component */
+.slider-cricket-videos .slick-slide > div {
+  margin-right: 0.5rem;
+  box-sizing: border-box;
+}
+
+/* Make <img> fill and crop correctly while preserving rounded corners */
+.video-card-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      /* important: crop to fill while keeping ratio */
+  border-radius: 0.75rem; /* match rounded-2xl (adjust if needed) */
+}
+
