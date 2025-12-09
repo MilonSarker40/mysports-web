@@ -15,7 +15,7 @@ const api = axios.create({
   },
 });
 
-const useNewsStore = create<NewsState>((set, get) => ({ // renamed 'post' -> 'get'
+const useNewsStore = create<NewsState>((set, post) => ({ // renamed 'post' -> 'get'
   newsList: [],
   featuredNews: null,
   loading: false,
@@ -32,12 +32,6 @@ const useNewsStore = create<NewsState>((set, get) => ({ // renamed 'post' -> 'ge
     try {
       set({ loading: true, error: null });
       console.log('Fetching news page:', pageNumber);
-
-      // OPTION A: If API expects params as query params (GET-like)
-      // const response = await api.get('/contentinfo/news', {
-      //   params: { page_number: pageNumber, per_page_count: 10 },
-      // });
-
       // OPTION B: If API expects JSON body with the keys directly (POST)
       const response = await api.post('/contentinfo/news', {
         page_number: pageNumber,
