@@ -1,10 +1,8 @@
-// app/page.tsx (সংশোধিত কোড)
 'use client' 
 
 import { useVideoContent } from '@/utils/useVideoContent' 
 import VideoPlayerModal from '@/components/VideoPlayerModal' 
 
-// আপনার অন্যান্য কম্পোনেন্ট ইম্পোর্ট
 import BannerSlider from '../components/BannerSlider'
 import LiveMatch from '../components/LiveMatch'
 import Tournaments from '../components/Tournaments'

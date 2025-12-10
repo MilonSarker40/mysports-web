@@ -18,40 +18,37 @@ export default function PlaylistPage({ params }: { params: { playlist: string } 
     const fetchData = async () => {
       setLoading(true);
       setError("");
+      
+      // This is the raw, unencoded title, e.g., "Popular Videos"
+      const rawTitle = playlistTitle; 
+      const endpoint = `/contentinfo/related-content?playlist_title=${rawTitle}`;
+      
+      console.log("[Playlist] GET", api.defaults?.baseURL + endpoint);
 
-      // Two possible encodings:
-      const enc1 = encodeURIComponent(playlistTitle); // "Popular%20Videos"
-      const enc2 = enc1.replace(/%20/g, "+");         // "Popular+Videos"
+      try {
+        // Note: The API call is a POST in your original code, not GET
+        const res = await api.post(endpoint); 
+        const list = res.data?.contents || [];
 
-      const attempts = [enc1, enc2];
+        if (list.length > 0) {
+          setItems(list);
+          setLoading(false);
+          // SUCCESS → stop trying more encodings (now only one attempt)
+          return; 
+        }
+      } catch (err: any) {
+        console.error(
+          "[Playlist] request failed:",
+          err?.response?.status,
+          err?.response?.data || err?.message
+        );
 
-      for (const encoded of attempts) {
-        const endpoint = `/contentinfo/related-content?playlist_title=${encoded}`;
-        console.log("[Playlist] GET", api.defaults?.baseURL + endpoint);
-
-        try {
-          const res = await api.post(endpoint);
-          const list = res.data?.contents || [];
-
-          if (list.length > 0) {
-            setItems(list);
-            setLoading(false);
-            return; // SUCCESS → stop trying more encodings
-          }
-        } catch (err: any) {
-          console.error(
-            "[Playlist] request failed:",
-            err?.response?.status,
-            err?.response?.data || err?.message
-          );
-
-          if (err?.response?.status === 403) {
-            setError("Access forbidden (403). Check API permissions.");
-          }
+        if (err?.response?.status === 403) {
+          setError("Access forbidden (403). Check API permissions.");
         }
       }
-
-      // If both encodings failed:
+      
+      // If the single attempt failed:
       setError("No videos found for this playlist.");
       setLoading(false);
     };
@@ -77,6 +74,7 @@ export default function PlaylistPage({ params }: { params: { playlist: string } 
             <div
               key={it.content_id}
               className="overflow-hidden border-b border-gray-200 cursor-pointer"
+              // 🛑 MODIFICATION HERE: Still using encodeURIComponent for the *path* segment
               onClick={() =>
                 router.push(`/videos/${encodeURIComponent(playlistTitle)}/${it.content_id}`)
               }

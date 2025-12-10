@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/utils/api";
+import { FaArrowLeftLong } from "react-icons/fa6";
 
 interface NewsDetails {
   content_id?: string;
@@ -142,61 +143,17 @@ export default function NewsDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       {/* Back Button Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-300">
-        <div className="container mx-auto px-4 py-4">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-black font-medium"
-          >
-            ← Back
+      <div className="sticky top-0 z-30 bg-red-500 shadow-md">
+        <div className="mx-auto max-w-4xl px-4 py-4 pb-6 flex items-center">
+          <button onClick={() => router.back()} className="text-white font-medium flex justify-center items-center">
+            <FaArrowLeftLong className="pr-1" /> News Details
           </button>
         </div>
       </div>
-
       {/* News Content */}
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
-        {/* Category Badge */}
-        {displayCategory && (
-          <div className="mb-4">
-            <span className={`text-sm font-medium px-3 py-1 rounded ${
-              displayCategory === 'football' 
-                ? 'bg-green-100 text-green-800'
-                : displayCategory === 'cricket'
-                ? 'bg-blue-100 text-blue-800'
-                : 'bg-gray-100 text-gray-800'
-            }`}>
-              {displayCategory === 'football' ? 'ফুটবল' : 
-               displayCategory === 'cricket' ? 'ক্রিকেট' : 
-               displayCategory}
-            </span>
-          </div>
-        )}
-
-        {/* News Title */}
-        <h1 className="text-2xl font-bold text-black mb-6 leading-tight">
-          {displayTitle}
-        </h1>
-
-        {/* Author and Date */}
-        <div className="flex items-center justify-between mb-8 text-sm text-gray-600 border-b border-gray-300 pb-4">
-          <div className="flex items-center">
-            <span className="font-medium">{newsDetails.author || "Sports Reporter"}</span>
-            {newsDetails.publish_date && (
-              <span className="mx-2">•</span>
-            )}
-          </div>
-          {newsDetails.publish_date && (
-            <span>
-              {new Date(newsDetails.publish_date).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </span>
-          )}
-        </div>
+      <div className="container mx-auto px-4 py-6 top-[-10px] bg-white relative z-30 rounded-t-2xl">
 
         {/* News Image */}
         {displayImage && (
@@ -211,15 +168,20 @@ export default function NewsDetailsPage() {
               }}
             />
             {newsDetails.image_caption && (
-              <p className="text-sm text-gray-500 mt-2 text-center">
+              <p className="text-xs text-gray-500 mt-2 text-center">
                 {newsDetails.image_caption}
               </p>
             )}
           </div>
         )}
 
+         {/* News Title */}
+        <h1 className="text-lg font-bold text-black mb-6 leading-tight">
+          {displayTitle}
+        </h1>
+
         {/* News Content */}
-        <div className="text-gray-800 leading-relaxed">
+        <div className="text-gray-800">
           {displayContent ? (
             <div 
               className="article-content"
@@ -231,82 +193,22 @@ export default function NewsDetailsPage() {
             </div>
           )}
         </div>
-
-        {/* Stats Section */}
-        <div className="mt-12 pt-8 border-t border-gray-300">
-          <div className="flex items-center space-x-6 text-sm text-gray-600">
-            {newsDetails.views && (
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <span>{newsDetails.views.toLocaleString()} views</span>
-              </div>
-            )}
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{newsDetails.read_time || "2"} min read</span>
-            </div>
-          </div>
-        </div>
       </div>
-
-      {/* Bottom Navigation - Same as news list page */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 py-3">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-5 gap-2">
-            {/* Result - Active */}
-            <button className="flex flex-col items-center text-black">
-              <span className="text-xs font-bold mb-1">Result</span>
-              <div className="w-6 h-0.5 bg-black mt-1"></div>
-            </button>
-
-            {/* Quiz */}
-            <button className="flex flex-col items-center text-gray-500">
-              <span className="text-xs font-medium mb-1">Quiz</span>
-            </button>
-
-            {/* Home */}
-            <button className="flex flex-col items-center text-gray-500">
-              <span className="text-xs font-medium mb-1">Home</span>
-            </button>
-
-            {/* News */}
-            <button 
-              onClick={() => router.push("/news")}
-              className="flex flex-col items-center text-gray-500"
-            >
-              <span className="text-xs font-medium mb-1">News</span>
-            </button>
-
-            {/* Profile */}
-            <button className="flex flex-col items-center text-gray-500">
-              <span className="text-xs font-medium mb-1">Profile</span>
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Spacing for bottom nav */}
-      <div className="pb-20"></div>
 
       {/* Custom CSS for article content */}
       <style jsx global>{`
         .article-content {
-          font-size: 1.125rem;
+          font-size:14px;
           line-height: 1.7;
         }
         
         .article-content p {
-          margin-bottom: 1.5rem;
+          margin-bottom: 0;
           text-align: justify;
         }
         
         .article-content strong, .article-content b {
-          font-weight: 600;
+          font-weight: 500;
         }
         
         .article-content em, .article-content i {
@@ -345,7 +247,7 @@ export default function NewsDetailsPage() {
         }
         
         .article-content h1 {
-          font-size: 1.875rem;
+          font-size:20px;
         }
         
         .article-content h2 {
@@ -353,7 +255,7 @@ export default function NewsDetailsPage() {
         }
         
         .article-content h3 {
-          font-size: 1.25rem;
+          font-size: 18px;
         }
         
         .article-content blockquote {
