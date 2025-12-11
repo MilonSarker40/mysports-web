@@ -36,7 +36,7 @@ export default function Cricket() {
           <img
             src={video.thumbnail}
             alt={video.content_title}
-            className="w-full h-full object-cover"
+            className="w-full h-full"
           />
 
           <div className="absolute inset-0 bg-black bg-opacity-30"></div>
@@ -79,7 +79,7 @@ export default function Cricket() {
               const title = cricketPlaylist?.playlist_title || "Cricket";
               router.push(`/videos/${encodeURIComponent(title)}`);
             }}
-            className="text-sm text-gray-600 font-semibold p-1 hover:text-gray-900"
+            className="text-sm text-gray-600 font-semibold p-1 hover:text-red-500"
           >
             See All
           </button>

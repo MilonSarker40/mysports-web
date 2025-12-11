@@ -44,7 +44,7 @@ export default function PopularVideos() {
             <img
               src={video.thumbnail}
               alt={video.content_title}
-              className="w-full h-full object-cover"
+              className="w-full h-full"
               loading="lazy"
               onError={(e) => { (e.target as HTMLImageElement).src = '/fallback-thumbnail.png' }}
             />
@@ -89,7 +89,7 @@ export default function PopularVideos() {
 
           <button
             onClick={handleSeeAll}
-            className="text-sm text-gray-600 font-semibold p-1 hover:text-gray-900"
+            className="text-sm text-gray-600 font-semibold p-1 hover:text-red-500"
             aria-label="See all Popular Videos"
           >
             See All

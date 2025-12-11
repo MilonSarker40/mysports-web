@@ -1,8 +1,8 @@
 // components/MatchList.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import api from '../utils/api';
+import React, { useEffect } from 'react';
+import { useMatchStore } from '@/store/useMatchStore';
 
-// --- Data Types from API ---
+// --- Data Types from API (Kept for component props) ---
 interface ContentItem {
     playlist_title: string;
     content_id: string;
@@ -20,35 +20,20 @@ interface ContentItem {
     innings: string | null; 
 }
 
-interface LiveScoreResponse {
-    content_id: string;
-    home_team_score: string;
-    away_team_score: string;
-    match_status: 'live' | 'upcoming' | 'completed' | string;
-    playlist_type: string;
-}
-
-interface AllContentResponse {
-    items: {
-        playlist_title: string;
-        playlist_type: string;
-        contents: ContentItem[];
-    }[];
-}
-
 interface TeamData { 
     name: string; 
     flag: string; 
     score: string; 
     overs?: string 
 }
-
-interface LiveMatchCardProps {
+// Renaming LiveMatchCardProps for reuse
+interface MatchCardProps { 
     series: string;
     innings: string;
     team1: TeamData;
     team2: TeamData;
-    isLive: boolean; 
+    matchStatus: 'live' | 'upcoming' | 'completed' | string; // Use matchStatus instead of isLive
+    matchResult: string | null; // Pass result
 }
 
 interface UpcomingMatchBlockProps {
@@ -59,11 +44,46 @@ interface UpcomingMatchBlockProps {
     time: string;
 }
 
-// --- Components (Same UI Structure) ---
+// --- Components (Modified LiveMatchCard) ---
 
-const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ series, innings, team1, team2, isLive }) => {
-    if (!isLive) return null; 
+const MatchCard: React.FC<MatchCardProps> = ({ series, innings, team1, team2, matchStatus, matchResult }) => {
+    // Determine the status text and background color
+    let statusText: string;
+    let statusColor: string;
+    let footerContent: React.ReactNode;
+    let cardClasses: string;
 
+    if (matchStatus === 'live') {
+        statusText = "LIVE";
+        statusColor = "text-green-600 font-semibold";
+        cardClasses = 'border border-b-2 border-b-red-700 border-gray-200 p-3 pb-0 rounded-t-lg';
+        footerContent = (
+            <div className="mt-4 flex justify-center">
+                <button className="flex items-center px-4 py-1.5 bg-red-600 text-white font-medium text-sm rounded-t-lg shadow-lg hover:bg-red-700 transition duration-150">
+                    {/* Play icon */}
+                    <svg className="w-4 h-4 mr-1 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Watch Live
+                </button>
+            </div>
+        );
+    } else if (matchStatus === 'completed') {
+        statusText = "COMPLETED";
+        statusColor = "text-blue-600 font-semibold";
+        cardClasses = 'border border-b-2 border-b-blue-700 border-gray-200 p-3 pb-0 rounded-t-lg';
+        footerContent = (
+            <div className="mt-4 flex justify-center py-2">
+                <p className="text-sm font-medium text-gray-700 text-center px-2">
+                    {matchResult || "Match Result Not Available"}
+                </p>
+            </div>
+        );
+    } else {
+        // Should not happen if data is filtered correctly, but as a fallback
+        return null;
+    }
+    
     // Helper to handle broken image links gracefully
     const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
         e.currentTarget.src = 'https://flagcdn.com/w20/cricket.png'; // Fallback flag
@@ -71,10 +91,10 @@ const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ series, innings, team1, t
 
     return (
         <div className="p-2 pt-2">
-            <div className='border border-b-2 border-b-red-700 border-gray-200 p-3 pb-0 rounded-t-lg'>
+            <div className={cardClasses}>
                 <div className="flex justify-between items-center text-xs mb-3">
                     <span className="text-gray-600 font-medium">{series}</span>
-                    <span className="text-green-600 font-semibold">{innings}</span>
+                    <span className={statusColor}>{statusText}</span>
                 </div>
 
                 {/* Team 1 Score Row (Home Team) */}
@@ -101,16 +121,8 @@ const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ series, innings, team1, t
                     </div>
                 </div>
 
-                {/* Watch Live Button */}
-                <div className="mt-4 flex justify-center">
-                    <button className="flex items-center px-4 py-1.5 bg-red-600 text-white font-medium text-sm rounded-t-lg shadow-lg hover:bg-red-700 transition duration-150">
-                        {/* Play icon */}
-                        <svg className="w-4 h-4 mr-1 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
-                        Watch Live
-                    </button>
-                </div>
+                {/* Footer Content (Watch Live or Result) */}
+                {footerContent}
             </div>
         </div>
     );
@@ -151,77 +163,20 @@ const UpcomingMatchBlock: React.FC<UpcomingMatchBlockProps> = ({ series, date, t
 // --- Main Component ---
 
 export default function MatchList() {
-    const [matchData, setMatchData] = useState<ContentItem | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchMatchData = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            // 1. Fetch live score data
-            const liveScoreResponse = await api.get<LiveScoreResponse>('/contentinfo/live-score');
-            const liveScore = liveScoreResponse.data;
-            const targetContentId = liveScore.content_id;
-
-            if (liveScore.match_status !== 'live') {
-                // If it's not live, we still need details for the header/upcoming sections
-                // but we can skip the live-score merging step
-                // We proceed to fetch all content to find the basic match info.
-            }
-            
-            // 2. Fetch all content data to get details (teams, flags, series info)
-            const allContentResponse = await api.post<AllContentResponse>('/contentinfo/all');
-            const allContent = allContentResponse.data;
-            
-            let matchedContent: ContentItem | null = null;
-            let playlistTitle: string | null = null;
-
-            // Find the match details using the content_id from the live score response
-            for (const playlist of allContent.items) {
-                const content = playlist.contents.find(c => c.content_id === targetContentId);
-                if (content) {
-                    matchedContent = content;
-                    playlistTitle = playlist.playlist_title;
-                    break;
-                }
-            }
-
-            if (matchedContent) {
-                setMatchData({
-                    ...matchedContent,
-                    playlist_title: playlistTitle || matchedContent.content_title, // Use playlist title as series name
-                    // Override score and status with the most up-to-date live data
-                    home_team_score: liveScore.home_team_score,
-                    away_team_score: liveScore.away_team_score,
-                    match_status: liveScore.match_status,
-                });
-            } else {
-                 setError("Live match details not found in content list.");
-            }
-
-        } catch (e) {
-            console.error("Error fetching match data:", e);
-            setError("Failed to load match data from API.");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const { matchData, loading, error, fetchMatchData } = useMatchStore();
 
     useEffect(() => {
-        fetchMatchData();
-        // Set up a polling interval to fetch data frequently (e.g., every 15 seconds)
-        const intervalId = setInterval(fetchMatchData, 15000); 
-
-        return () => clearInterval(intervalId); // Cleanup on unmount
-    }, [fetchMatchData]);
+        fetchMatchData(false);
+        const intervalId = setInterval(() => fetchMatchData(true), 15000); 
+        return () => clearInterval(intervalId);
+    }, [fetchMatchData]); 
 
     // --- Loading and Error States ---
     if (loading) {
         return (
             <section className="mt-4 px-4">
                 <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 text-center text-gray-600">
-                    Loading live match data...
+                    Loading match data...
                 </div>
             </section>
         );
@@ -230,16 +185,15 @@ export default function MatchList() {
     if (error || !matchData) {
         return (
             <section className="mt-4 px-4">
-                <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 text-center text-red-600">
-                    {error || "No match data available to display."}
+                <div className="text-center text-red-600">
+                    {/* Display error if needed */}
                 </div>
             </section>
         );
     }
     
-    // --- Prepare data for components ---
-    
-    const isLive = matchData.match_status === 'live';
+    // --- Data Preparation (No Change) ---
+    const matchStatus = matchData.match_status;
     const seriesTitle = matchData.playlist_title || matchData.content_title;
 
     const team1Data: TeamData = {
@@ -252,16 +206,61 @@ export default function MatchList() {
         name: matchData.away_team,
         flag: matchData.away_team_icon,
         score: matchData.away_team_score || "0/0",
-        overs: "N/A" // Overs are not in the provided live-score structure
+        overs: matchData.innings || "N/A" // Using innings here for a specific display like '36.2 ov' in image
     };
     
-    // Placeholder for upcoming data based on the current series
     const upcomingData = {
         series: seriesTitle,
-        date: "Next Match TBD",
-        time: "TBD",
+        date: matchData.match_date,
+        time: matchData.match_time,
     };
+    // ------------------------------------
 
+    // --- Conditional Content Rendering ---
+    let mainContent;
+
+    if (matchStatus === 'live' || matchStatus === 'completed') {
+        // Show one Live/Completed match card
+        mainContent = (
+            <MatchCard
+                series={seriesTitle}
+                innings={team2Data.overs || "N/A"}
+                team1={team1Data}
+                team2={team2Data}
+                matchStatus={matchStatus}
+                matchResult={matchData.match_result}
+            />
+        );
+    } else if (matchStatus === 'upcoming') {
+        // Show two Upcoming match blocks side-by-side
+        mainContent = (
+            <div className="flex border border-gray-200 m-2 rounded-lg">
+                <UpcomingMatchBlock
+                    {...upcomingData}
+                    team1={{ name: team1Data.name, flag: team1Data.flag }}
+                    team2={{ name: team2Data.name, flag: team2Data.flag }}
+                />
+                {/* Vertical Separator line in the middle */}
+                <div className="w-px bg-gray-200 my-2"></div>
+                <UpcomingMatchBlock
+                    {...upcomingData}
+                    team1={{ name: team1Data.name, flag: team1Data.flag }}
+                    team2={{ name: team2Data.name, flag: team2Data.flag }}
+                />
+            </div>
+        );
+    } else {
+        // Fallback for other statuses
+        return (
+            <section className="mt-4 px-4">
+                <div className="text-center text-gray-500">
+                    Match data is available, but the status ({matchStatus}) is not supported for display.
+                </div>
+            </section>
+        );
+    }
+
+    // --- Final Render ---
     return (
         <section className="mt-4 px-4">
             {/* Outer Container */}
@@ -277,60 +276,21 @@ export default function MatchList() {
                     </span>
                 </div>
 
-                {/* Live Match Cards (Conditionally rendered) */}
-                {isLive ? (
-                    <>
-                        <LiveMatchCard
-                            series={seriesTitle}
-                            innings={"LIVE"} // Use a clear live indicator
-                            team1={team1Data}
-                            team2={team2Data}
-                            isLive={isLive}
-                        />
-                         {/* Duplicating the live card as per the original image structure */}
-                         <LiveMatchCard
-                            series={seriesTitle}
-                            innings={"LIVE"}
-                            team1={team1Data}
-                            team2={team2Data}
-                            isLive={isLive}
-                        />
-                    </>
-                ) : (
-                    // Show result/status if not live
-                    <div className="p-3 text-center text-gray-700 bg-gray-50 border-b">
-                        <p className="font-semibold text-sm">Match Status: {matchData.match_result || matchData.match_status}</p>
+                {/* Conditional Main Content */}
+                {mainContent}
+
+                {/* Down Arrow/Footer element (Only showing if it's not the Upcoming view, or keep it for all) */}
+                {(matchStatus === 'live' || matchStatus === 'completed') && (
+                    <div className="flex justify-center p-1">
+                        {/* Chevron Down Icon */}
+                        <svg className="w-5 h-5 text-gray-500" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                                strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </div>
                 )}
-                
-                {/* Upcoming Matches Section (Side-by-side) */}
-                <div className="flex border border-gray-200 m-2 rounded-lg">
-                    {/* Upcoming Match 1 */}
-                    <UpcomingMatchBlock
-                        {...upcomingData}
-                        team1={{ name: team1Data.name, flag: team1Data.flag }}
-                        team2={{ name: team2Data.name, flag: team2Data.flag }}
-                    />
-                    {/* Vertical Separator line in the middle */}
-                    <div className="w-px bg-gray-200 my-2"></div>
-                    {/* Upcoming Match 2 */}
-                    <UpcomingMatchBlock
-                        {...upcomingData}
-                        team1={{ name: team1Data.name, flag: team1Data.flag }}
-                        team2={{ name: team2Data.name, flag: team2Data.flag }}
-                    />
-                </div>
-
-                {/* Down Arrow/Footer element */}
-                <div className="flex justify-center p-1">
-                    {/* Chevron Down Icon */}
-                    <svg className="w-5 h-5 text-gray-500" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round"
-                            strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
             </div>
         </section>
     );

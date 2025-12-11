@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/utils/api";
-import { FaArrowLeft } from "react-icons/fa6";
 
 export default function PlaylistPage({ params }: { params: { playlist: string } }) {
   const router = useRouter();
@@ -60,11 +59,9 @@ export default function PlaylistPage({ params }: { params: { playlist: string } 
   return (
     <div className="min-h-screen bg-gray-50 relative z-10 rounded-t-2xl">
       <header className="text-gray-600 py-4 px-4">
-        <div className="max-w-3xl mx-auto flex items-center gap-1">
-          <button className="p-1 flex justify-center items-center hover:text-red-500" onClick={() => router.back()}>
-            <FaArrowLeft />
-            <h1 className="text-base font-semibold pl-1 text-black-400 capitalize">{decodeURIComponent(playlistTitle)}</h1>
-          </button>
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+          <button className="p-1" onClick={() => router.back()}>←</button>
+          <h1 className="text-base font-semibold">{playlistTitle}</h1>
         </div>
       </header>
 

@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/utils/api";
 import Hls from "hls.js";
-import { FaArrowLeft } from "react-icons/fa6";
 
 type Content = {
   content_id?: string;
@@ -15,22 +14,6 @@ type Content = {
   thumbnail?: string;     // image url
   [k: string]: any;
 };
-
-
-function fullyDecode(input?: string) {
-  let s = String(input ?? "");
-  for (let i = 0; i < 3; i++) {
-    try {
-      const decoded = decodeURIComponent(s);
-      if (decoded === s) break;
-      s = decoded;
-    } catch {
-      break;
-    }
-  }
-  // leftover literal %20 -> space
-  return s.replace(/%20/g, " ");
-}
 
 export default function VideoDetailClient({ params }: { params: { playlist: string; contentId: string } }) {
   const { playlist, contentId } = params;
@@ -43,21 +26,12 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
   const [error, setError] = useState("");
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // normalized playlist values
-  const decodedPlaylist = fullyDecode(playlist);
-  const playlistType = decodedPlaylist ? String(decodedPlaylist).toLowerCase() : "";
-  const encodedPlaylist = encodeURIComponent(decodedPlaylist); // single encode for API
-
-  // DEBUG: temporary logs to inspect upstream values (remove after verifying)
-  useEffect(() => {
-    console.log("raw playlist param:", playlist);
-    console.log("decodedPlaylist:", decodedPlaylist);
-    console.log("encodedPlaylist for API:", encodedPlaylist);
-  }, [playlist, decodedPlaylist, encodedPlaylist]);
-
   // Load primary details and related list
   useEffect(() => {
     if (!contentId) return;
+
+    const playlistType = playlist ? String(playlist).toLowerCase() : "";
+    const encodedPlaylist = encodeURIComponent(String(playlist || ""));
 
     (async () => {
       setLoading(true);
@@ -76,7 +50,7 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
         // fallback to related-content -> try to find content there
         try {
           setLoadingRelated(true);
-          console.log("[Details] Fallback: POST related-content?playlist_title=" + encodedPlaylist);
+          console.log("[Details] Fallback: POST related-content");
           const r2 = await api.post(`/contentinfo/related-content?playlist_title=${encodedPlaylist}`);
           const contents: Content[] = r2.data?.contents || [];
           setRelated(contents);
@@ -117,6 +91,7 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
     const src = (item?.url || item?.playlist) as string | null;
     if (!src) return;
 
+    // Remove any previous src & Hls instance by recreating element source assignment flow.
     let hls: Hls | null = null;
 
     const attachAndPlay = async () => {
@@ -148,6 +123,7 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
           hls.destroy();
         } catch {}
       }
+      // pause/reset source
       try {
         videoEl.pause();
       } catch {}
@@ -158,6 +134,7 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
   const handleSelect = (c: Content) => {
     setError("");
     setItem(c);
+    // scroll player into view
     const videoWrap = document.getElementById("video-player-wrap");
     if (videoWrap) videoWrap.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -166,10 +143,8 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
     <div className="min-h-screen bg-gray-50 rounded-t-2xl relative z-10 p-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => router.back()} className="p-1 flex justify-center items-center hover:text-red-400">
-             <FaArrowLeft />
-            <h1 className="text-base pl-1 font-semibold truncate">{decodedPlaylist || "Playlist"}</h1>
-          </button>
+          <button onClick={() => router.back()} className="p-1 rounded hover:bg-gray-100">←</button>
+          <h1 className="text-base font-semibold truncate">{playlist || "Playlist"}</h1>
         </div>
 
         {loading && <p className="text-sm text-gray-500">Loading video details...</p>}
@@ -196,7 +171,7 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
         )}
 
         {/* Related list / More videos */}
-        <div className="mt-3 bg-[#f3f3f3] min-h-screen p-4 rounded-t-2xl mx-[-16px]">
+        <div className="mt-6 bg-[#f3f3f3] min-h-screen p-4 rounded-t-2xl mx-[-16px]">
           <h3 className="text-base font-medium mb-5">More Videos</h3>
 
           {loadingRelated && <p className="text-sm text-gray-500">Loading related videos...</p>}
@@ -226,6 +201,8 @@ export default function VideoDetailClient({ params }: { params: { playlist: stri
                       <div className="text-sm font-medium line-clamp-2">{c.content_title}</div>
                       {c.description && <div className="text-xs text-gray-500 mt-1 line-clamp-2">{c.description}</div>}
                     </div>
+
+                    {/* <div className="text-xs text-gray-400">{isActive ? "Playing" : "Play"}</div> */}
                   </button>
                 );
               })

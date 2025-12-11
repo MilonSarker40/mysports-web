@@ -33,7 +33,7 @@ export default function Trending() {
           <img
             src={video.thumbnail}
             alt={video.content_title}
-            className="w-full h-full object-cover"
+            className="w-full h-full"
             loading="lazy"
             onError={(e) => { (e.target as HTMLImageElement).src = '/fallback-thumbnail.png' }}
           />
@@ -72,7 +72,7 @@ export default function Trending() {
 
           <button
             onClick={() => router.push('/videos/trending')}
-            className="text-sm text-gray-600 font-semibold p-1 hover:text-gray-900"
+            className="text-sm text-gray-600 font-semibold p-1 hover:text-red-500"
           >
             See All
           </button>
