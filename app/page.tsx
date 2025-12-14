@@ -1,4 +1,4 @@
-'use client' 
+"use client"
 
 import { useVideoContent } from '@/utils/useVideoContent' 
 import VideoPlayerModal from '@/components/VideoPlayerModal' 
