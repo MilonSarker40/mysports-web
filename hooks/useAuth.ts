@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
+import apiget from '@/utils/apiget'
 
 const API_BASE_URL = 'https://apiv2.mysports.com.bd/api/v1'
 
@@ -76,13 +77,22 @@ export function useAuth() {
       // আপনার API অনুযায়ী: /otp/{msisdn} (NOT /otp/wap/{msisdn})
       console.log('📡 Calling: POST /otp/' + formattedNumber)
       
-      const response = await fetch(`${API_BASE_URL}/otp/${formattedNumber}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}) // আপনার API-তে বডি খালি থাকতে পারে
-      })
+      const response = await fetch(
+  `${API_BASE_URL}/otp/${formattedNumber}`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      accessinfo: {
+        access_token: 'K165S6V6q4C6G7H0y9C4f5W7t5YeC6',
+        referenceCode: '20210804113635',
+      },
+    }),
+  }
+);
+
       
       console.log('📊 Response status:', response.status)
       
@@ -118,98 +128,55 @@ export function useAuth() {
     }
   }
 
-  const verifyOTP = async (msisdn: string, otpCode: string): Promise<boolean> => {
-    setIsLoading(true)
-    clearError()
-    
+  const verifyOTP = async (msisdn: string, otp: string): Promise<boolean> => {
+    setIsLoading(true);
+    clearError();
+
     try {
-      // OTP ভ্যালিডেশন
-      if (otpCode.length !== 4 || !/^\d{4}$/.test(otpCode)) {
-        setError('Please enter valid 4-digit OTP code')
-        return false
-      }
+      const formatted = msisdn.startsWith("01")
+        ? "880" + msisdn.slice(1)
+        : msisdn;
 
-      // নম্বর ফরম্যাট ঠিক করা
-      let formattedMsisdn = msisdn
-      if (msisdn.startsWith('01') && msisdn.length === 11) {
-        formattedMsisdn = '880' + msisdn.substring(1)
-      }
-
-      console.log('🔐 Verifying OTP:', {
-        local: msisdn,
-        api: formattedMsisdn,
-        otp: otpCode
-      })
-      
-      // OTP যাচাই API কল
-      const response = await fetch(`${API_BASE_URL}/otp/${formattedMsisdn}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const verifyRes = await apiget.post(`/otp/${formatted}`, {
+        accessinfo: {
+          access_token: "K165S6V6q4C6G7H0y9C4f5W7t5YeC6",
+          referenceCode: "20210804113635",
         },
-        body: JSON.stringify({
-          otp: otpCode
-        }),
-      })
-      
-      console.log('📊 Verification status:', response.status)
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('❌ Verify OTP error:', errorText)
-        
-        // ভুল OTP এর জন্য
-        if (response.status === 400 || response.status === 401) {
-          setError('Invalid OTP code. Please try again.')
-        } else {
-          setError('Verification failed. Please try again.')
-        }
-        return false
+      });
+
+      if (verifyRes?.data?.result !== "success") {
+        setError("Invalid OTP");
+        return false;
       }
-      
-      const data = await response.json()
-      console.log('✅ Verify OTP response:', data)
-      
-      // আপনার API দুইটা রেসপন্স ফরম্যাট সাপোর্ট করে:
-      // 1. {"accessinfo": {...}} - OTP পাঠানোর রেসপন্স
-      // 2. {"otp_info": "8187", "result": "success"} - OTP যাচাই রেসপন্স
-      
-      if (data.result === 'success' || data.otp_info === otpCode) {
-        // ইউজার ইনফো তৈরি (get-msisdn API থেকে ডেটা নিন)
-        const userResponse = await fetch(`${API_BASE_URL}/get-msisdn`)
-        let userData = null
-        
-        if (userResponse.ok) {
-          userData = await userResponse.json()
-        }
-        
-        const userInfo: UserInfo = {
-          uuid: userData?.user_info?.uuid || data.accessinfo?.referenceCode || `user-${Date.now()}`,
-          operatorname: userData?.user_info?.operatorname || 'robi',
-          msisdn: formattedMsisdn,
-          logo: userData?.user_info?.logo || "https://live-technologies-vod.akamaized.net/cinematic/assets/img/robi.png"
-        }
-        
-        const accessToken = data.accessinfo?.access_token || userData?.accessToken || `token-${Date.now()}`
-        
-        // লগইন করান
-        login(accessToken, userInfo)
-        
-        // হোম পেজে redirect
-        router.replace('/')
-        return true
-      } else {
-        setError('Invalid OTP. Please try again.')
-        return false
+
+      // ✅ NOW CALL get-msisdn TO GET TOKEN
+      const userRes = await apiget.get("/get-msisdn");
+
+      const token = userRes?.data?.accessToken;
+      const user = userRes?.data?.user_info;
+
+      if (!token || !user) {
+        setError("Authentication failed");
+        return false;
       }
-    } catch (error) {
-      console.error('🚨 Error verifying OTP:', error)
-      setError('Network error. Please check your connection.')
-      return false
+
+      const userInfo: UserInfo = {
+        uuid: user.uuid,
+        operatorname: user.operatorname,
+        msisdn: user.msisdn,
+        logo: user.logo,
+      };
+
+      login(token, userInfo);
+      router.replace("/");
+      return true;
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "OTP verification failed");
+      return false;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
   
   const handleLogout = () => {
     zustandLogout()

@@ -10,24 +10,14 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
   const { isLoggedIn } = useAuthStore()
 
   useEffect(() => {
-    // Pages that don't require authentication
-    const isPublicPage = 
-      pathname === '/otp' || 
-      pathname === '/otp/verify' || 
-      pathname.startsWith('/admin') ||
-      pathname === '/login' ||
-      pathname === '/register'
+    const isPublic =
+      pathname === '/otp' ||
+      pathname.startsWith('/otp/verify') ||
+      pathname.startsWith('/admin')
 
-    // If not logged in and trying to access protected page, redirect to OTP
-    if (!isLoggedIn && !isPublicPage) {
-      router.push('/otp')
-    }
-
-    // If logged in and trying to access OTP pages, redirect to home
-    if (isLoggedIn && (pathname === '/otp' || pathname === '/otp/verify')) {
-      router.push('/')
-    }
-  }, [isLoggedIn, pathname, router])
+    if (!isLoggedIn && !isPublic) router.push('/otp')
+    if (isLoggedIn && pathname.startsWith('/otp')) router.push('/')
+  }, [isLoggedIn, pathname])
 
   return <>{children}</>
 }
