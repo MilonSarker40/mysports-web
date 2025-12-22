@@ -20,14 +20,14 @@ export function useAuth() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  /* ----------------------------------
+  /* =================================
      SEND OTP
-  ---------------------------------- */
+  ================================= */
   const sendOTP = useCallback(async () => {
     setIsLoading(true);
 
     try {
-      // 1️⃣ Detect Robi SIM
+      /* 1️⃣ Detect Robi SIM */
       const detectRes = await fetch(`${API_BASE}/get-msisdn`, {
         method: "GET",
         cache: "no-store",
@@ -45,7 +45,7 @@ export function useAuth() {
         return false;
       }
 
-      // 2️⃣ SEND OTP (STATIC TOKEN)
+      /* 2️⃣ Send OTP */
       const otpRes = await fetch(`${API_BASE}/otp/${msisdn}`, {
         method: "POST",
         headers: {
@@ -67,7 +67,7 @@ export function useAuth() {
         throw new Error("OTP_FAILED");
       }
 
-      // 3️⃣ Save temp data
+      /* 3️⃣ Save temp session */
       localStorage.setItem("msisdn", msisdn);
 
       toast.success("OTP sent successfully");
@@ -81,9 +81,9 @@ export function useAuth() {
     }
   }, []);
 
-  /* ----------------------------------
+  /* =================================
      VERIFY OTP
-  ---------------------------------- */
+  ================================= */
   const verifyOTP = useCallback(
     async (otp: string) => {
       if (otp.length !== 4) {
@@ -125,7 +125,7 @@ export function useAuth() {
           uuid: data.uuid ?? crypto.randomUUID(),
           operatorname: "robi",
           msisdn,
-          subscription: { subscribed: false },
+          subscription: { subscribed: false }, // real status will come from Subscription/Profile page
         });
 
         toast.success("Login successful");
@@ -143,9 +143,9 @@ export function useAuth() {
     [login]
   );
 
-  /* ----------------------------------
+  /* =================================
      LOGOUT
-  ---------------------------------- */
+  ================================= */
   const handleLogout = useCallback(() => {
     logout();
     localStorage.clear();

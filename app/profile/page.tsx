@@ -10,14 +10,15 @@ export default function Profile() {
   const router = useRouter()
   const { handleLogout, isLoading } = useAuth()
 
-  const { userInfo, isLoggedIn } = useAuthStore()
+  const { userInfo, isLoggedIn, updateSubscription } = useAuthStore()
   const [mounted, setMounted] = useState(false)
 
+  /* ------------------ MOUNT ------------------ */
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  /* AUTH GUARD */
+  /* ------------------ AUTH GUARD ------------------ */
   useEffect(() => {
     if (!mounted) return
     if (!isLoggedIn || !userInfo?.msisdn) {
@@ -38,9 +39,18 @@ export default function Profile() {
   const formatPhone = (p: string) =>
     `+${p.slice(0, 3)} ${p.slice(3, 7)}-${p.slice(7)}`
 
+  /* ------------------ UNSUBSCRIBE ------------------ */
+  const handleUnsubscribe = () => {
+    // 1️⃣ clear subscription from store (UI instantly hide হবে)
+    updateSubscription({ subscribed: false })
+
+    // 2️⃣ go to subscription page (operator will handle real unsubscribe)
+    router.push('/subscription')
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] pt-4">
-      {/* USER INFO */}
+      {/* ================= USER INFO ================= */}
       <div className="bg-white mx-4 rounded-xl p-6 mb-6 shadow">
         <p className="text-center text-sm text-gray-500 mb-1">
           Logged in with {userInfo.operatorname}
@@ -61,22 +71,27 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* SUBSCRIPTION CARD */}
-      {subscription?.subscribed && (
+      {/* ================= SUBSCRIPTION CARD ================= */}
+      {subscription?.subscribed === true && (
         <div className="bg-white mx-4 rounded-xl p-6 shadow">
           <h2 className="font-bold mb-3">Your Subscription</h2>
 
-          <div className="flex items-center text-lg font-medium mb-1">
-            <FaBangladeshiTakaSign className="mr-1" />
-            {subscription.price} / {subscription.day} day
-          </div>
+          {/* SAFE GUARDS */}
+          {subscription.price && subscription.day && (
+            <div className="flex items-center text-lg font-medium mb-1">
+              <FaBangladeshiTakaSign className="mr-1" />
+              {subscription.price} / {subscription.day} day
+            </div>
+          )}
 
-          <p className="capitalize text-gray-600 mb-4">
-            {subscription.pack_name}
-          </p>
+          {subscription.pack_name && (
+            <p className="capitalize text-gray-600 mb-4">
+              {subscription.pack_name}
+            </p>
+          )}
 
           <button
-            onClick={() => router.push('/subscription')}
+            onClick={handleUnsubscribe}
             className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg"
           >
             Unsubscribe

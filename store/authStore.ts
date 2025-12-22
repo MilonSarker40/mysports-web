@@ -56,8 +56,8 @@ export const useAuthStore = create<AuthState>()(
         set((state) => {
           if (!state.userInfo) return state
 
-          // ❌ UNSUBSCRIBED → CLEAR PACK
-          if (!subscription.subscribed) {
+          /* ❌ UNSUBSCRIBE → CLEAR EVERYTHING */
+          if (subscription.subscribed === false) {
             return {
               userInfo: {
                 ...state.userInfo,
@@ -66,21 +66,15 @@ export const useAuthStore = create<AuthState>()(
             }
           }
 
-          // ✅ SUBSCRIBED → MERGE SAFELY
+          /* ✅ SUBSCRIBE / UPDATE → MERGE SAFELY */
           return {
             userInfo: {
               ...state.userInfo,
               subscription: {
                 subscribed: true,
-                pack_name:
-                  subscription.pack_name ??
-                  state.userInfo.subscription.pack_name,
-                price:
-                  subscription.price ??
-                  state.userInfo.subscription.price,
-                day:
-                  subscription.day ??
-                  state.userInfo.subscription.day,
+                pack_name: subscription.pack_name,
+                price: subscription.price,
+                day: subscription.day,
               },
             },
           }
@@ -95,14 +89,17 @@ export const useAuthStore = create<AuthState>()(
         }),
     }),
     {
+      /* ---------- PERSIST ---------- */
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
 
+      /* persist only real session data */
       partialize: (state) => ({
         accessToken: state.accessToken,
         userInfo: state.userInfo,
       }),
 
+      /* auto-login after refresh */
       onRehydrateStorage: () => (state) => {
         if (state?.accessToken && state?.userInfo) {
           state.isLoggedIn = true
