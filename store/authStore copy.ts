@@ -16,14 +16,18 @@ export interface UserInfo {
   operatorname: string
   msisdn: string
   logo?: string
-  subscription: SubscriptionInfo
+  subscription?: SubscriptionInfo
 }
 
 interface AuthState {
+  /* runtime flag */
   isLoggedIn: boolean
+
+  /* persisted session data */
   accessToken: string | null
   userInfo: UserInfo | null
 
+  /* actions */
   login: (token: string, user: UserInfo) => void
   updateSubscription: (subscription: SubscriptionInfo) => void
   logout: () => void
@@ -45,10 +49,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           isLoggedIn: true,
           accessToken: token,
-          userInfo: {
-            ...user,
-            subscription: user.subscription ?? { subscribed: false },
-          },
+          userInfo: user,
         }),
 
       /* ---------- UPDATE SUBSCRIPTION ---------- */
@@ -56,32 +57,10 @@ export const useAuthStore = create<AuthState>()(
         set((state) => {
           if (!state.userInfo) return state
 
-          // ❌ UNSUBSCRIBED → CLEAR PACK
-          if (!subscription.subscribed) {
-            return {
-              userInfo: {
-                ...state.userInfo,
-                subscription: { subscribed: false },
-              },
-            }
-          }
-
-          // ✅ SUBSCRIBED → MERGE SAFELY
           return {
             userInfo: {
               ...state.userInfo,
-              subscription: {
-                subscribed: true,
-                pack_name:
-                  subscription.pack_name ??
-                  state.userInfo.subscription.pack_name,
-                price:
-                  subscription.price ??
-                  state.userInfo.subscription.price,
-                day:
-                  subscription.day ??
-                  state.userInfo.subscription.day,
-              },
+              subscription,
             },
           }
         }),
@@ -95,14 +74,17 @@ export const useAuthStore = create<AuthState>()(
         }),
     }),
     {
+      /* ---------- PERSIST CONFIG ---------- */
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
 
+      /* 🔒 persist only real session data */
       partialize: (state) => ({
         accessToken: state.accessToken,
         userInfo: state.userInfo,
       }),
 
+      /* ✅ auto-login on refresh */
       onRehydrateStorage: () => (state) => {
         if (state?.accessToken && state?.userInfo) {
           state.isLoggedIn = true

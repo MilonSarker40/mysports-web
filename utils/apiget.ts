@@ -12,17 +12,24 @@ const apiget = axios.create({
   timeout: 15000,
 })
 
+/* ================= REQUEST INTERCEPTOR ================= */
 apiget.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      // 🚫 Skip auth header for OTP APIs
-      if (!config.url?.startsWith('/otp')) {
+      const url = config.url || ''
+
+      // 🚫 DO NOT attach token for OTP APIs
+      if (!url.startsWith('/otp')) {
         const storage = localStorage.getItem('auth-storage')
         if (storage) {
-          const parsed = JSON.parse(storage)
-          const token = parsed?.state?.accessToken
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`
+          try {
+            const parsed = JSON.parse(storage)
+            const token = parsed?.state?.accessToken
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`
+            }
+          } catch {
+            // ignore parse error
           }
         }
       }
@@ -33,15 +40,17 @@ apiget.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-
+/* ================= RESPONSE INTERCEPTOR ================= */
 apiget.interceptors.response.use(
   (res) => res,
   (error) => {
     const status = error?.response?.status
+    const url = error?.config?.url || ''
 
-    if (status === 401) {
+    // ❌ Do NOT auto-redirect for OTP APIs
+    if (status === 401 && !url.startsWith('/otp')) {
       localStorage.removeItem('auth-storage')
-      window.location.href = '/otp'
+      window.location.replace('/otp')
     }
 
     if (status === 508) {

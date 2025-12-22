@@ -1,23 +1,47 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 
-export default function AuthChecker({ children }: { children: React.ReactNode }) {
+export default function AuthChecker({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const router = useRouter()
   const pathname = usePathname()
-  const { isLoggedIn } = useAuthStore()
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn)
+
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const isPublic =
-      pathname === '/otp' ||
-      pathname.startsWith('/otp/verify') ||
-      pathname.startsWith('/admin')
+    setMounted(true)
+  }, [])
 
-    if (!isLoggedIn && !isPublic) router.push('/otp')
-    if (isLoggedIn && pathname.startsWith('/otp')) router.push('/')
-  }, [isLoggedIn, pathname])
+  useEffect(() => {
+    if (!mounted) return
+
+    const isPublicRoute =
+      pathname === '/otp' ||
+      pathname.startsWith('/otp/verify')
+
+    // ❌ not logged in → otp
+    if (!isLoggedIn && !isPublicRoute) {
+      router.replace('/otp')
+      return
+    }
+
+    // ✅ logged in → block otp pages
+    if (
+      isLoggedIn &&
+      (pathname === '/otp' || pathname.startsWith('/otp/verify'))
+    ) {
+      router.replace('/profile') // ✅ FIXED
+    }
+  }, [isLoggedIn, pathname, router, mounted])
+
+  if (!mounted) return null
 
   return <>{children}</>
 }

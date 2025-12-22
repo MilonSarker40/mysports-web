@@ -39,7 +39,6 @@ export default function OTPVerifyPage() {
   const handleChange = (index: number, value: string) => {
     const cleanValue = value.replace(/[^0-9]/g, '')
 
-    // Handle paste
     if (cleanValue.length > 1) {
       const pasted = cleanValue.split('').slice(0, 4 - index)
       const newOtp = [...otp]
@@ -62,7 +61,7 @@ export default function OTPVerifyPage() {
   }
 
   /* -----------------------------
-     BACKSPACE HANDLING
+     BACKSPACE
   ----------------------------- */
   const handleKeyDown = (
     index: number,
@@ -87,51 +86,37 @@ export default function OTPVerifyPage() {
   }
 
   /* -----------------------------
-     RESEND OTP
+     RESEND OTP ✅ FIXED
   ----------------------------- */
   const handleResendOTP = async () => {
-    await sendOTP()
+    await sendOTP() // ✅ NO ARGUMENT
     setOtp(['', '', '', ''])
     inputRefs.current[0]?.focus()
   }
 
   /* =============================
-     UI
+     UI (UNCHANGED)
   ============================= */
   return (
     <div className="min-h-screen bg-red-500 relative overflow-hidden flex flex-col items-center pt-10">
-      {/* Back Arrow */}
       <div
         className="absolute top-4 left-4 cursor-pointer"
         onClick={() => router.back()}
       >
-        <svg
-          className="w-6 h-6 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-          />
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
       </div>
 
-      {/* Card */}
       <div className="bg-white rounded-t-3xl shadow-lg w-full flex-grow p-8 flex flex-col items-center">
         <div className="text-center mb-8">
-          <h1 className="text-lg font-medium text-gray-900 mb-2">
-            OTP Code
-          </h1>
+          <h1 className="text-lg font-medium text-gray-900 mb-2">OTP Code</h1>
           <p className="text-gray-600 font-medium">
             Enter the OTP sent to <strong>{mobileNumber}</strong>
           </p>
         </div>
 
-        {/* OTP Inputs */}
         <div className="flex justify-center space-x-3 mb-8">
           {otp.map((digit, index) => (
             <input
@@ -148,18 +133,13 @@ export default function OTPVerifyPage() {
           ))}
         </div>
 
-        {/* Resend */}
         <p className="text-gray-600 text-xs mb-8">
           Don&apos;t receive the OTP?
-          <button
-            onClick={handleResendOTP}
-            className="text-red-500 font-medium ml-1"
-          >
+          <button onClick={handleResendOTP} className="text-red-500 font-medium ml-1">
             RESEND OTP
           </button>
         </p>
 
-        {/* Verify Button */}
         <button
           onClick={handleVerify}
           disabled={otp.join('').length !== 4 || isLoading}
