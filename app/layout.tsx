@@ -22,26 +22,40 @@ export default function RootLayout({
   const pathname = usePathname()
 
   /* ----------------------------------
-     ROUTES WHERE HEADER/NAV HIDDEN
+     HEADER HIDE ROUTES
   ---------------------------------- */
-
-  const hideExact = [
-    '/login',
-    '/register',
-    '/admin',
+  const hideHeaderExact = [
     '/otp',
     '/otp/verify',
-    '/quiz/play',
-    '/quiz/result',
-    // '/subscription',
+    '/login',
+    '/register',
+    '/subscription',
+    '/news/[id]',
   ]
 
-  const hideDynamic =
-    pathname.startsWith('/news/') ||
-    pathname.startsWith('/admin/') ||
-    pathname.startsWith('/quiz/')
+  const hideHeaderDynamic =
+    pathname.startsWith('/quiz/play') ||
+    pathname.startsWith('/admin/')
 
-  const shouldHide = hideExact.includes(pathname) || hideDynamic
+  const hideHeader =
+    hideHeaderExact.includes(pathname) || hideHeaderDynamic
+
+  /* ----------------------------------
+     FOOTER (NAV) HIDE ROUTES
+  ---------------------------------- */
+  const hideFooterExact = [
+    '/otp',
+    '/otp/verify',
+    '/login',
+    '/register',
+  ]
+
+  const hideFooterDynamic =
+    pathname.startsWith('/quiz/') ||
+    pathname.startsWith('/admin/')
+
+  const hideFooter =
+    hideFooterExact.includes(pathname) || hideFooterDynamic
 
   return (
     <html lang="en">
@@ -49,11 +63,15 @@ export default function RootLayout({
         <AuthChecker>
           <div className="min-h-screen bg-gray-50 pb-16">
             <div className="container mx-auto">
-              {!shouldHide && <Header />}
 
+              {/* ✅ HEADER */}
+              {!hideHeader && <Header />}
+
+              {/* PAGE CONTENT */}
               {children}
 
-              {!shouldHide && <Navigation />}
+              {/* ✅ FOOTER / NAVIGATION */}
+              {!hideFooter && <Navigation />}
 
               {/* 🔔 GLOBAL TOAST */}
               <ToastContainer

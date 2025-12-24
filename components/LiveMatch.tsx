@@ -206,7 +206,7 @@ export default function MatchList() {
         name: matchData.away_team,
         flag: matchData.away_team_icon,
         score: matchData.away_team_score || "0/0",
-        overs: matchData.innings || "N/A" // Using innings here for a specific display like '36.2 ov' in image
+        overs: matchData.innings || "N/A" 
     };
     
     const upcomingData = {

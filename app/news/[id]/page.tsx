@@ -143,17 +143,17 @@ export default function NewsDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white relative z-10 rounded-t-2xl">
       {/* Back Button Header */}
-      <div className="sticky top-0 z-30 bg-red-500 shadow-md">
-        <div className="mx-auto max-w-4xl px-4 py-4 pb-6 flex items-center">
-          <button onClick={() => router.back()} className="text-white font-medium flex justify-center items-center">
+      <div className="">
+        <div className="mx-auto max-w-4xl px-4 py-4 pb-0 flex items-center">
+          <button onClick={() => router.back()} className="text-black font-medium hover:text-red-500 flex justify-center items-center">
             <FaArrowLeftLong className="pr-1" /> News Details
           </button>
         </div>
       </div>
       {/* News Content */}
-      <div className="container mx-auto px-4 py-6 top-[-10px] bg-white relative z-30 rounded-t-2xl">
+      <div className="container mx-auto px-4 py-6 top-[-10px]">
 
         {/* News Image */}
         {displayImage && (

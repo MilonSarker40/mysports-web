@@ -90,7 +90,7 @@ export default function OTPVerifyPage() {
      RESEND OTP
   ----------------------------- */
   const handleResendOTP = async () => {
-    await sendOTP()
+    await sendOTP({inputNumber: mobileNumber as string})
     setOtp(['', '', '', ''])
     inputRefs.current[0]?.focus()
   }

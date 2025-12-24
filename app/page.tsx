@@ -29,8 +29,8 @@ export default function Home() {
       
       <div className='bg-[#f3f3f3] relative z-10 rounded-t-2xl pt-2'>
         <LiveMatch />
-        <Tournaments />
-        <FootballMatch />
+        {/* <Tournaments />
+        <FootballMatch /> */}
         <FeaturedVideos />
         <Cricket />
         <Trending />

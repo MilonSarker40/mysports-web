@@ -20,17 +20,29 @@ export function useAuth() {
   /* ----------------------------------
      SEND OTP
   ---------------------------------- */
-  const sendOTP = useCallback(async ({ inputNumber = null } : { inputNumber?: string | null }) => {
+  const sendOTP = useCallback(async () => {
     setIsLoading(true);
-
-    let msisdn = inputNumber;
-    let accessToken = 'null';
 
     try {
       // 1️⃣ Detect Robi SIM
-      if (!inputNumber) {
-        
+      const detectRes = await fetch(`${API_BASE}/get-msisdn`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!detectRes.ok) throw new Error("DETECT_FAILED");
+
+      const detectData = await detectRes.json();
+
+      const msisdn = detectData?.user_info?.msisdn;
+      const operator = detectData?.user_info?.operatorname;
+      const accessToken = detectData?.accessToken;
+
+      if (!msisdn || operator !== "robi" || !accessToken) {
+        toast.error("Please use Robi SIM mobile data");
+        return false;
       }
+
       // 2️⃣ SEND OTP (HEADER + BODY BOTH ✅)
       const otpRes = await fetch(`${API_BASE}/otp/${msisdn}`, {
         method: "POST",

@@ -14,7 +14,6 @@ export default function Profile() {
 
   const [mounted, setMounted] = useState(false)
 
-  /* ---------------- HYDRATION ---------------- */
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -38,26 +37,20 @@ export default function Profile() {
   const formatPhone = (p: string) =>
     `+${p.slice(0, 3)} ${p.slice(3, 7)}-${p.slice(7)}`
 
-  /* ---------------- PROFILE UNSUBSCRIBE ---------------- */
+  /* ---------------- UNSUBSCRIBE HANDLER ---------------- */
   const handleUnsubscribe = () => {
-    // শুধু UI state clear
-    updateSubscription({
-      subscribed: false,
-      pack_name: undefined,
-      price: undefined,
-      day: undefined,
-    })
+    // 🔑 instantly remove subscription from profile
+    updateSubscription({ subscribed: false })
 
-    // subscription page এ পাঠানো
+    // 🔁 go to subscription page
     router.push('/subscription')
   }
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-[#f5f5f5] rounded-t-2xl relative pt-4">
+    <div className="min-h-screen bg-[#f5f5f5] pt-4">
       {/* USER INFO */}
-      <div className="bg-white mx-4 rounded-xl p-6 mb-10 mt-5 shadow">
-        <p className="text-center">You Are Logged In With</p>
+      <div className="bg-white mx-4 rounded-xl p-6 mb-6 shadow">
         <p className="text-center text-xl font-bold">
           {formatPhone(userInfo.msisdn)}
         </p>
@@ -77,8 +70,8 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* SUBSCRIPTION INFO (ONLY IF SUBSCRIBED) */}
-      {subscription?.subscribed && (
+      {/* SUBSCRIPTION SECTION */}
+      {subscription?.subscribed ? (
         <div className="bg-white mx-4 rounded-xl p-6 shadow">
           <h2 className="font-bold mb-2">Your Subscription</h2>
 
@@ -91,11 +84,21 @@ export default function Profile() {
             {subscription.pack_name}
           </p>
 
+          {/* ✅ UNSUBSCRIBE BUTTON */}
           <button
             onClick={handleUnsubscribe}
-            className="mt-4 w-full bg-gray-400 text-white py-2 rounded-lg"
+            className="mt-4 w-full bg-gray-400 text-white py-2 rounded"
           >
             Unsubscribe
+          </button>
+        </div>
+      ) : (
+        <div className="mx-4 text-center">
+          <button
+            onClick={() => router.push('/subscription')}
+            className="bg-red-500 text-white px-6 py-3 rounded-lg"
+          >
+            View Subscription Plans
           </button>
         </div>
       )}

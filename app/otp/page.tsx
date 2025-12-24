@@ -1,22 +1,60 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "react-toastify";
+import { isRobiNumber } from "@/utils/robicheck";
+
+const API_BASE = "https://apiv2.mysports.com.bd/api/v1";
 
 export default function OTPPage() {
-  const router = useRouter()
-  const { sendOTP, isLoading } = useAuth()
+  const router = useRouter();
+  const { sendOTP, isLoading } = useAuth();
 
   // UI only (backend does NOT use this)
-  const [mobileNumber, setMobileNumber] = useState('')
+  const [mobileNumber, setMobileNumber] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMsisdnHeader();
+  }, []);
+
+  const getMsisdnHeader = async () => {
+    const detectRes = await fetch(`${API_BASE}/get-msisdn`, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    const detectData = await detectRes.json();
+    let msisdn = detectData?.user_info?.msisdn;
+    const operator = detectData?.user_info?.operatorname;
+    const accessToken = detectData?.accessToken;
+
+    if (!msisdn || operator !== "robi" || !accessToken) {
+      toast.error("Please use Robi SIM mobile data");
+      msisdn = null;
+      return false;
+    }
+
+    setMobileNumber(msisdn || "null");
+  };
 
   const handleSendOTP = async () => {
-    const ok = await sendOTP()
-    if (ok) {
-      router.push('/otp/verify')
+    if (!mobileNumber) {
+      toast.error("Please use Robi SIM mobile data");
+      return;
     }
-  }
+
+    if (!isRobiNumber(mobileNumber)) {
+      toast.error("Please enter a valid Robi SIM number");
+      return;
+    }
+
+    const ok = await sendOTP({ inputNumber: mobileNumber as string });
+    if (ok) {
+      router.push("/otp/verify");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-red-500 relative overflow-hidden flex flex-col items-center pt-10">
@@ -78,7 +116,7 @@ export default function OTPPage() {
 
           <input
             type="tel"
-            value={mobileNumber}
+            value={(mobileNumber as string) || ""}
             onChange={(e) => setMobileNumber(e.target.value)}
             placeholder="Robi SIM number"
             className="w-full pl-4 pr-4 py-3 border-b-2 border-[#c8cccf] text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -95,9 +133,9 @@ export default function OTPPage() {
           disabled={isLoading}
           className="w-full max-w-xs bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white py-3 rounded-lg"
         >
-          {isLoading ? 'SENDING OTP...' : 'SEND OTP'}
+          {isLoading ? "SENDING OTP..." : "SEND OTP"}
         </button>
       </div>
     </div>
-  )
+  );
 }
