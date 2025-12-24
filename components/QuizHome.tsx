@@ -20,20 +20,14 @@ const QuizHome = () => {
       title: "Coin Collector",
       subtitle: "Earn 50 Coins",
       bgColor: "#ffffff",
-      image: "/images/quize-img-1.png" 
+      image: "/images/img_live_game.png" 
     },
     {
       title: "Live Quiz", 
       subtitle: "Earn 50 Coins",
       bgColor: "#ffffff",
-      image: "/images/quize-img-2.png" 
+      image: "/images/img_general_quiz.png" 
     },
-    {
-      title: "Quick Play",
-      subtitle: "Earn 50 Coins",
-      bgColor: "#ffffff",
-      image: "/images/quize-img-3.png" 
-    }
   ]
 
   return (

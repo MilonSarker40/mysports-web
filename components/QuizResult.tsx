@@ -25,9 +25,9 @@ const QuizResult = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white rounded-t-2xl z-10 relative">
       {/* Back Button */}
-      <div className="mb-4 p-4">
+      <div className="p-4">
         <ArrowLeft 
           size={24} 
           className="text-gray-700 cursor-pointer" 
