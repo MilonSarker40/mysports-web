@@ -89,8 +89,6 @@ export default function Profile() {
       {/* SUBSCRIPTION INFO (ONLY IF SUBSCRIBED) */}
       {subscription?.subscribed && (
         <div className="bg-white mx-4 rounded-xl p-6 shadow">
-          <h2 className="font-bold mb-2">Your Subscription</h2>
-
           <div className="flex items-center text-lg font-medium">
             <FaBangladeshiTakaSign className="mr-1" />
             {subscription.price} / {subscription.day} day

@@ -44,6 +44,7 @@ export default function Profile() {
     updateSubscription({
       subscribed: false,
       pack_name: undefined,
+      billing_message: undefined,
       price: undefined,
       day: undefined,
     })
@@ -79,25 +80,39 @@ export default function Profile() {
 
       {/* SUBSCRIPTION INFO (ONLY IF SUBSCRIBED) */}
       {subscription?.subscribed && (
+        <>
+        <h2 className="font-medium text-center px-10 mb-10">To enjoy all premium sports content please choose a package</h2>
         <div className="bg-white mx-4 rounded-xl p-6 shadow">
-          <h2 className="font-bold mb-2">Your Subscription</h2>
-
           <div className="flex items-center text-lg font-medium">
-            <FaBangladeshiTakaSign className="mr-1" />
-            {subscription.price} / {subscription.day} day
+            <span className="flex items-center bg-red-500 text-white px-3 py-1 w-20 h-20 rounded-full">
+              <FaBangladeshiTakaSign className="mr-1" />
+              {subscription.price}
+            </span> 
+            <span className='pl-5'>
+             <p className="capitalize font-bold mt-1 text-black">
+              {subscription.pack_name}
+            </p>
+            <p className="capitalize mt-1 text-sm text-gray-600">
+              {subscription.billing_message}
+            </p>
+          </span>
           </div>
-
-          <p className="capitalize mt-1 text-gray-600">
-            {subscription.pack_name}
-          </p>
-
           <button
             onClick={handleUnsubscribe}
-            className="mt-4 w-full bg-gray-400 text-white py-2 rounded-lg"
+            className="w-full bg-red-500 text-white py-3 mt-5 rounded-lg"
           >
             Unsubscribe
           </button>
         </div>
+        <div className="mt-10 text-center px-8">
+          <p className="text-base text-gray-600">
+            Watch Live Match, Sports News, videos & Daily Sports Update
+          </p>
+          <p className="text-base text-red-500 font-bold mt-5">
+            Help Line : <span className="font-bold">22222</span>
+          </p>
+        </div>
+        </>
       )}
     </div>
   )

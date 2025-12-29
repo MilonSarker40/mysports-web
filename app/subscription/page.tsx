@@ -61,6 +61,7 @@ export default function SubscriptionPage() {
                 pack_name: activePack.pack_name,
                 price: activePack.price,
                 day: activePack.day,
+                billing_message: activePack.billing_message,
               }
             : { subscribed: false }
         )

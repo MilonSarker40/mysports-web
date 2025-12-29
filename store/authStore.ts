@@ -7,6 +7,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 export interface SubscriptionInfo {
   subscribed: boolean
   pack_name?: string
+  billing_message?:string
   price?: string
   day?: string
 }
@@ -66,6 +67,7 @@ export const useAuthStore = create<AuthState>()(
               subscription: {
                 subscribed: subscription.subscribed,
                 pack_name: subscription.pack_name,
+                billing_message: subscription.billing_message,
                 price: subscription.price,
                 day: subscription.day,
               },

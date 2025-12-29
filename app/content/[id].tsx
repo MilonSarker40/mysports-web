@@ -31,6 +31,7 @@ export default function ContentDetailPage() {
       `/contentinfo/${contentId}`,
       `/contentinfo/content/${contentId}`,
       `/content/${contentId}`,
+      `/content/[id]`,
       // add more if your backend uses other routes
     ]
 
