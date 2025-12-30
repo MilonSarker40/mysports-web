@@ -1,9 +1,9 @@
-const CryptoJS = require("crypto-js");
+import CryptoJS from "crypto-js";
 
 const secretKey = "myName070233Islamic2021".slice(0, 16);
 const iv = "a1b2c3d4e5f6g7h8";
 
- function EncryptData_JS(plaintext) {
+export function EncryptData_JS(plaintext: string): string {
   const encrypted = CryptoJS.AES.encrypt(
     plaintext,
     CryptoJS.enc.Utf8.parse(secretKey),
@@ -17,7 +17,7 @@ const iv = "a1b2c3d4e5f6g7h8";
   return encrypted.toString(); // base64
 }
 
- function DecryptData_JS(ciphertext) {
+export function DecryptData_JS(ciphertext: string): string | null {
   try {
     const bytes = CryptoJS.AES.decrypt(
       ciphertext,
@@ -36,13 +36,11 @@ const iv = "a1b2c3d4e5f6g7h8";
   }
 }
 
-function generate16DigitNumber() {
-  return Math.floor(
-    1e15 + Math.random() * 9e15
-  ).toString();
+function generate16DigitNumber(): string {
+  return Math.floor(1e15 + Math.random() * 9e15).toString();
 }
 
- function generateEncryptedToken() {
+export function generateEncryptedToken() {
   const rnd1 = generate16DigitNumber();
   const rnd2 = generate16DigitNumber();
 
@@ -54,39 +52,3 @@ function generate16DigitNumber() {
     encrypted,
   };
 }
-
-
-// ---------------------------------------
-// TEST 1: Encrypt in JS → Decrypt in JS
-// ---------------------------------------
-console.log("\n--- TEST 1: JS → JS ---");
-const jsEnc = EncryptData_JS("2025-12-08|ThematicQuiz2025|2025-12-09");
-console.log("JS Encrypted:", jsEnc);
-console.log("JS Decrypted:", DecryptData_JS(jsEnc));
-
-// ---------------------------------------
-// TEST 2: Simulate PHP Encrypted string 
-//        (copy from actual PHP result)
-// ---------------------------------------
-const encryptedFromPHP = jsEnc; // replace with real PHP ciphertext
-
-console.log("\n--- TEST 2: PHP → JS ---");
-console.log("PHP Encrypted:", encryptedFromPHP);
-console.log("JS Decrypted:", DecryptData_JS(encryptedFromPHP));
-
-// ---------------------------------------
-// TEST 3: Generate and encrypt custom string
-
-const {encrypted} = generateEncryptedToken()
-console.log("\n--- TEST 3: Generate and Decrypt ---");
-console.log("Generated Encrypted:", encrypted);
-console.log("JS Decrypted:", DecryptData_JS('rkg62m8uhCSj0+e6hkRm0YQcU2B8q+zUEKq0am0AQJLRyosrsrykUYIch7UG693e'));
-
-// ---------------------------------------
-// Export functions for future integration
-// ---------------------------------------
-module.exports = {
-  EncryptData_JS,
-  DecryptData_JS,
-  generateEncryptedToken
-};

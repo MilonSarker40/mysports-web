@@ -7,7 +7,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 import { useAuthStore } from "@/store/authStore";
-import {generateEncryptedToken} from "@/utils/aesTest";
+import { generateEncryptedToken } from "@/utils/aesTest";
 
 const QuizPage = () => {
   const router = useRouter();
@@ -168,7 +168,7 @@ const QuizPage = () => {
   const totalEarn = question.total_earn_points ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#f3f3f3] relative z-20 rounded-3xl pb-20">
+    <div className="min-h-screen bg-[#f3f3f3] relative z-20 rounded-t-3xl pb-20">
       {/* HEADER */}
       <div className="flex items-center px-4 py-4 relative">
         <button

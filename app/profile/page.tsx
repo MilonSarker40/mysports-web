@@ -9,7 +9,6 @@ import { useAuthStore } from '@/store/authStore'
 export default function Profile() {
   const router = useRouter()
   const { handleLogout, isLoading } = useAuth()
-
   const { userInfo, isLoggedIn, updateSubscription } = useAuthStore()
 
   const [mounted, setMounted] = useState(false)
@@ -38,22 +37,12 @@ export default function Profile() {
   const formatPhone = (p: string) =>
     `+${p.slice(0, 3)} ${p.slice(3, 7)}-${p.slice(7)}`
 
-  /* ---------------- PROFILE UNSUBSCRIBE ---------------- */
+  /* ---------------- UI UNSUBSCRIBE ---------------- */
   const handleUnsubscribe = () => {
-    // শুধু UI state clear
-    updateSubscription({
-      subscribed: false,
-      pack_name: undefined,
-      billing_message: undefined,
-      price: undefined,
-      day: undefined,
-    })
-
-    // subscription page এ পাঠানো
+    // updateSubscription({ subscribed: false })
     router.push('/subscription')
   }
 
-  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-[#f5f5f5] rounded-t-2xl relative pt-4">
       {/* USER INFO */}
@@ -78,40 +67,52 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* SUBSCRIPTION INFO (ONLY IF SUBSCRIBED) */}
+      {/* ---------------- NOT SUBSCRIBED ---------------- */}
+      {!subscription?.subscribed && (
+        <h2 className="font-medium text-center px-10 mb-10">
+          To enjoy all premium sports content please choose a package
+        </h2>
+      )}
+
+      {/* ---------------- SUBSCRIBED INFO ---------------- */}
       {subscription?.subscribed && (
         <>
-        <h2 className="font-medium text-center px-10 mb-10">To enjoy all premium sports content please choose a package</h2>
-        <div className="bg-white mx-4 rounded-xl p-6 shadow">
-          <div className="flex items-center text-lg font-medium">
-            <span className="flex items-center bg-red-500 text-white px-3 py-1 w-20 h-20 rounded-full">
-              <FaBangladeshiTakaSign className="mr-1" />
-              {subscription.price}
-            </span> 
-            <span className='pl-5'>
-             <p className="capitalize font-bold mt-1 text-black">
-              {subscription.pack_name}
-            </p>
-            <p className="capitalize mt-1 text-sm text-gray-600">
-              {subscription.billing_message}
-            </p>
-          </span>
+          <div className="bg-white mx-4 rounded-xl p-6 shadow">
+            <div className="flex items-center">
+              <span className="flex items-center justify-center bg-red-500 text-white w-20 h-20 rounded-full">
+                <FaBangladeshiTakaSign className="mr-1" />
+                {subscription.price}
+              </span>
+
+              <div className="pl-5">
+                <p className="capitalize font-bold text-black">
+                  {subscription.pack_name}
+                </p>
+
+                {subscription.billing_message && (
+                  <p className="mt-1 text-sm text-gray-600">
+                    {subscription.billing_message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={handleUnsubscribe}
+              className="w-full bg-red-500 text-white py-3 mt-5 rounded-lg"
+            >
+              Unsubscribe
+            </button>
           </div>
-          <button
-            onClick={handleUnsubscribe}
-            className="w-full bg-red-500 text-white py-3 mt-5 rounded-lg"
-          >
-            Unsubscribe
-          </button>
-        </div>
-        <div className="mt-10 text-center px-8">
-          <p className="text-base text-gray-600">
-            Watch Live Match, Sports News, videos & Daily Sports Update
-          </p>
-          <p className="text-base text-red-500 font-bold mt-5">
-            Help Line : <span className="font-bold">22222</span>
-          </p>
-        </div>
+
+          <div className="mt-10 text-center px-8">
+            <p className="text-base text-gray-600">
+              Watch Live Match, Sports News, videos & Daily Sports Update
+            </p>
+            <p className="text-base text-red-500 font-bold mt-5">
+              Help Line : <span className="font-bold">22222</span>
+            </p>
+          </div>
         </>
       )}
     </div>

@@ -7,7 +7,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 export interface SubscriptionInfo {
   subscribed: boolean
   pack_name?: string
-  billing_message?:string
+  billing_message?: string
   price?: string
   day?: string
 }
@@ -21,14 +21,10 @@ export interface UserInfo {
 }
 
 interface AuthState {
-  /* runtime flag */
   isLoggedIn: boolean
-
-  /* persisted session data */
   accessToken: string | null
   userInfo: UserInfo | null
 
-  /* actions */
   login: (token: string, user: UserInfo) => void
   updateSubscription: (subscription: SubscriptionInfo) => void
   logout: () => void
@@ -52,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: token,
           userInfo: {
             ...user,
-            subscription: user.subscription ?? { subscribed: false },
+            // ❌ DO NOT force subscription here
           },
         }),
 
@@ -84,17 +80,16 @@ export const useAuthStore = create<AuthState>()(
         }),
     }),
     {
-      /* ---------- PERSIST CONFIG ---------- */
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
 
-      /* 🔒 persist only real session data */
+      /* persist only session data */
       partialize: (state) => ({
         accessToken: state.accessToken,
         userInfo: state.userInfo,
       }),
 
-      /* ✅ auto-login on refresh */
+      /* auto login on refresh */
       onRehydrateStorage: () => (state) => {
         if (state?.accessToken && state?.userInfo) {
           state.isLoggedIn = true

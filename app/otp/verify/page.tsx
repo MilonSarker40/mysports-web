@@ -150,17 +150,31 @@ export default function OTPVerifyPage() {
         {/* OTP Inputs */}
         <div className="flex justify-center space-x-3 mb-8">
           {otp.map((digit, index) => (
+            // <input
+            //   key={index}
+            //   ref={(el) => (inputRefs.current[index] = el)}
+            //   type="text"
+            //   inputMode="numeric"
+            //   maxLength={4}
+            //   value={digit}
+            //   onChange={(e) => handleChange(index, e.target.value)}
+            //   onKeyDown={(e) => handleKeyDown(index, e)}
+            //   className="w-16 h-16 border-b-2 border-[#c8cccf] text-center text-2xl font-semibold focus:outline-none focus:border-red-500"
+            // />
             <input
               key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
+              ref={(el) => {
+                inputRefs.current[index] = el
+              }}
               type="text"
               inputMode="numeric"
-              maxLength={4}
+              maxLength={1}
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               className="w-16 h-16 border-b-2 border-[#c8cccf] text-center text-2xl font-semibold focus:outline-none focus:border-red-500"
             />
+
           ))}
         </div>
 

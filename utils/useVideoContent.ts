@@ -5,28 +5,40 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
 import { useAuthStore } from '@/store/authStore'
-import api from '../utils/api'
+import api from '@/utils/api'
 
-/* ---------------- TYPES (example) ---------------- */
-interface Playlist {
-  playlist_type: string
-  items: Content[]
-}
+/* =========================
+   TYPES (EXPORTED)
+========================= */
 
-interface Content {
+export interface Content {
   content_id: string
   content_title: string
+  thumbnail?: string
+  banner?: string
   is_premium: 'true' | 'false'
+}
+
+export interface Playlist {
+  playlist_type: string
+  playlist_title?: string
+  contents?: Content[]
+  items?: Content[] // backend inconsistency safeguard
 }
 
 interface VideoDetails {
   url: string
 }
 
+/* =========================
+   HOOK
+========================= */
+
 export const useVideoContent = () => {
   const router = useRouter()
   const { userInfo } = useAuthStore()
 
+  /* ---------------- STATE ---------------- */
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [selectedVideoContent, setSelectedVideoContent] =
     useState<Content | null>(null)
@@ -37,21 +49,20 @@ export const useVideoContent = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  /* -------------------------------
-     SUBSCRIPTION FLAG (✅ FIXED)
-  -------------------------------- */
+  /* ---------------- SUBSCRIPTION FLAG ---------------- */
   const isSubscribed = userInfo?.subscription?.subscribed === true
 
-  /* -------------------------------
+  /* =========================
      1. FETCH ALL PLAYLISTS
-  -------------------------------- */
+  ========================= */
   const fetchContentList = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
       const res = await api.post('/contentinfo/all')
-      setPlaylists(res.data.items ?? [])
+      const items: Playlist[] = res.data?.items ?? []
+      setPlaylists(items)
     } catch (err) {
       console.error('Error fetching content list:', err)
       setError('Failed to load video content list.')
@@ -60,35 +71,37 @@ export const useVideoContent = () => {
     }
   }, [])
 
-  /* -------------------------------
+  /* =========================
      2. FETCH VIDEO DETAILS
-  -------------------------------- */
+  ========================= */
   const fetchVideoDetails = useCallback(
     async (contentId: string, playlistType: string) => {
-      setIsLoading(true)
-      setVideoUrl(null)
       setError(null)
+      setVideoUrl(null)
 
       try {
         const url = `/contentinfo/details?playlist_type=${playlistType}&content_id=${contentId}`
         const res = await api.post<VideoDetails>(url)
 
+        if (!res.data?.url) {
+          throw new Error('VIDEO_URL_MISSING')
+        }
+
         setVideoUrl(res.data.url)
         return res.data.url
       } catch (err) {
         console.error('Error fetching video details:', err)
-        setError('Failed to load video stream.')
+        toast.error('ভিডিও লোড করা যায়নি')
         return null
-      } finally {
-        setIsLoading(false)
       }
     },
     []
   )
 
-  /* -------------------------------
-     3. HANDLE VIDEO PLAY (🔒 PREMIUM GUARD)
-  -------------------------------- */
+  /* =========================
+     3. HANDLE VIDEO PLAY
+     🔒 Premium Guard Included
+  ========================= */
   const handleVideoPlay = useCallback(
     async (content: Content, playlistType: string) => {
       // 🔒 PREMIUM CHECK
@@ -98,18 +111,31 @@ export const useVideoContent = () => {
         return
       }
 
-      // ✅ ALLOWED
+      setIsLoading(true)
+
+      // 1️⃣ Fetch video URL first
+      const url = await fetchVideoDetails(
+        content.content_id,
+        playlistType
+      )
+
+      if (!url) {
+        setIsLoading(false)
+        return
+      }
+
+      // 2️⃣ Then open modal
       setSelectedVideoContent(content)
       setIsVideoPlaying(true)
 
-      await fetchVideoDetails(content.content_id, playlistType)
+      setIsLoading(false)
     },
     [fetchVideoDetails, router, isSubscribed]
   )
 
-  /* -------------------------------
+  /* =========================
      4. CLOSE VIDEO
-  -------------------------------- */
+  ========================= */
   const handleCloseVideo = useCallback(() => {
     setIsVideoPlaying(false)
     setSelectedVideoContent(null)
@@ -121,16 +147,16 @@ export const useVideoContent = () => {
     }
   }, [])
 
-  /* -------------------------------
+  /* =========================
      INIT
-  -------------------------------- */
+  ========================= */
   useEffect(() => {
     fetchContentList()
   }, [fetchContentList])
 
-  /* -------------------------------
-     RETURN
-  -------------------------------- */
+  /* =========================
+     RETURN API
+  ========================= */
   return {
     playlists,
     selectedVideoContent,
@@ -141,6 +167,6 @@ export const useVideoContent = () => {
     handleVideoPlay,
     handleCloseVideo,
     videoRef,
-    isSubscribed, // optional expose
+    isSubscribed,
   }
 }

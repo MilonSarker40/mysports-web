@@ -21,7 +21,7 @@ interface PackageItem {
 
 export default function SubscriptionPage() {
   const router = useRouter()
-  const updateSubscription = useAuthStore(s => s.updateSubscription)
+  const updateSubscription = useAuthStore((s) => s.updateSubscription)
 
   const [packages, setPackages] = useState<PackageItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,7 +52,8 @@ export default function SubscriptionPage() {
 
         setPackages(packList)
 
-        const activePack = packList.find(p => p.is_subscribe)
+        // 🔥 detect active subscription
+        const activePack = packList.find((p) => p.is_subscribe)
 
         updateSubscription(
           activePack
@@ -65,7 +66,8 @@ export default function SubscriptionPage() {
               }
             : { subscribed: false }
         )
-      } catch {
+      } catch (err) {
+        console.error(err)
         toast.error('Failed to load subscription')
       } finally {
         setLoading(false)
@@ -77,7 +79,6 @@ export default function SubscriptionPage() {
 
   /* ---------------- SUB / UNSUB ---------------- */
   const handleAction = (pkg: PackageItem) => {
-    // ❌ API not allowed now
     if (!pkg.loadSubApi) {
       toast.info('Please wait, processing...')
       return
@@ -88,13 +89,14 @@ export default function SubscriptionPage() {
       return
     }
 
-    // ✅ redirect ONLY here
+    // 🔁 Telco billing redirect
     window.location.href = pkg.sub_unsub_url
   }
 
   /* ---------------- UI ---------------- */
   return (
     <div className="min-h-screen bg-red-500">
+      {/* HEADER */}
       <div className="p-4 text-center text-white font-semibold">
         Subscription
       </div>
@@ -103,36 +105,48 @@ export default function SubscriptionPage() {
         {loading ? (
           <p className="text-center">Loading…</p>
         ) : (
-          <div className="grid gap-4">
-            {packages.map((pkg, i) => (
-              <div>
-                <p className="text-gray-700 text-base text-center mt-5 mb-8">
-                  To enjoy all premium sports content please choose a package
-                </p>
-                
-                <div key={i} className="bg-white rounded-2xl p-5 text-center shadow">
+          <>
+            {/* TEXT (outside map) */}
+            <p className="text-gray-700 text-base text-center mt-5 mb-8">
+              To enjoy all premium sports content please choose a package
+            </p>
+
+            <div className="grid gap-6">
+              {packages.map((pkg) => (
+                <div
+                  key={pkg.pack_name}
+                  className="bg-white rounded-2xl p-5 text-center shadow"
+                >
+                  {/* PRICE */}
                   <div className="bg-red-500 w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-3">
                     <FaBangladeshiTakaSign className="text-white" />
-                    <span className="text-white font-bold ml-1">{pkg.price}</span>
+                    <span className="text-white font-bold ml-1">
+                      {pkg.price}
+                    </span>
                   </div>
 
-                  <h2 className="font-semibold capitalize">{pkg.pack_name}</h2>
+                  {/* NAME */}
+                  <h2 className="font-semibold capitalize">
+                    {pkg.pack_name}
+                  </h2>
 
+                  {/* BILLING MESSAGE */}
                   <p className="text-xs text-gray-500 mb-4">
                     {pkg.billing_message}
                   </p>
 
-                  {/* ✅ CORRECT BUTTON */}
+                  {/* ACTION BUTTON */}
                   <button
                     disabled={!pkg.loadSubApi}
                     onClick={() => handleAction(pkg)}
-                    className={`w-full py-3 rounded-lg text-white ${
-                      !pkg.loadSubApi
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : pkg.is_subscribe
-                        ? 'bg-gray-400'
-                        : 'bg-red-500 hover:bg-red-600'
-                    }`}
+                    className={`w-full py-3 rounded-lg text-white font-semibold transition
+                      ${
+                        !pkg.loadSubApi
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : pkg.is_subscribe
+                          ? 'bg-gray-400'
+                          : 'bg-red-500 hover:bg-red-600'
+                      }`}
                   >
                     {!pkg.loadSubApi
                       ? 'Processing...'
@@ -141,17 +155,19 @@ export default function SubscriptionPage() {
                       : 'Subscribe'}
                   </button>
                 </div>
-                <div className="mt-10 text-center px-8">
-                  <p className="text-base text-gray-600">
-                    Watch Live Match, Sports News, videos & Daily Sports Update
-                  </p>
-                  <p className="text-base text-red-500 font-bold mt-5">
-                    Help Line : <span className="font-bold">22222</span>
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* FOOTER INFO */}
+            <div className="mt-10 text-center px-8">
+              <p className="text-base text-gray-600">
+                Watch Live Match, Sports News, videos & Daily Sports Update
+              </p>
+              <p className="text-base text-red-500 font-bold mt-5">
+                Help Line : <span className="font-bold">22222</span>
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>

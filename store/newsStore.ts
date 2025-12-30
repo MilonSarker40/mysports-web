@@ -1,21 +1,64 @@
-// store/newsStore.ts
-import { create } from 'zustand';
-import axios from 'axios';
+import { create } from 'zustand'
+import axios from 'axios'
 
-// (keep your type definitions above unchanged)
+/* =========================
+   TYPES
+========================= */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://apiv2.mysports.com.bd/api/v1';
-const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '5pake7mh5ln64h5t28kpvtv3iri';
+export interface NewsItem {
+  content_id: string
+  title?: string
+  short_description?: string
+  description?: string
+  image?: string
+  is_featured?: boolean
+  published_at?: string
+}
+
+export interface NewsState {
+  newsList: NewsItem[]
+  featuredNews: NewsItem | null
+  loading: boolean
+  error: string | null
+  page: number
+  hasMore: boolean
+  totalPages: number
+
+  newsDetails: NewsItem | null
+  detailsLoading: boolean
+  detailsError: string | null
+
+  fetchNewsList: (pageNumber?: number) => Promise<void>
+  fetchNewsDetails: (contentId: string) => Promise<void>
+  resetNewsList: () => void
+  resetNewsDetails: () => void
+}
+
+/* =========================
+   API SETUP
+========================= */
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'https://apiv2.mysports.com.bd/api/v1'
+
+const API_TOKEN =
+  process.env.NEXT_PUBLIC_API_TOKEN ||
+  '5pake7mh5ln64h5t28kpvtv3iri'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${API_TOKEN}`,
+    Authorization: `Bearer ${API_TOKEN}`,
   },
-});
+})
 
-const useNewsStore = create<NewsState>((set, post) => ({ // renamed 'post' -> 'get'
+/* =========================
+   STORE
+========================= */
+
+const useNewsStore = create<NewsState>((set, get) => ({
   newsList: [],
   featuredNews: null,
   loading: false,
@@ -23,38 +66,33 @@ const useNewsStore = create<NewsState>((set, post) => ({ // renamed 'post' -> 'g
   page: 1,
   hasMore: true,
   totalPages: 1,
-  
+
   newsDetails: null,
   detailsLoading: false,
   detailsError: null,
-  
+
   fetchNewsList: async (pageNumber = 1) => {
     try {
-      set({ loading: true, error: null });
-      console.log('Fetching news page:', pageNumber);
-      // OPTION B: If API expects JSON body with the keys directly (POST)
+      set({ loading: true, error: null })
+
       const response = await api.post('/contentinfo/news', {
         page_number: pageNumber,
         per_page_count: 10,
-      });
-
-      console.log('API Response (raw):', response);
-      console.log('API Response data:', response.data);
+      })
 
       if (response.data?.status) {
-        // normalize possible shapes:
-        const apiData = response.data.data ?? response.data; // guard
-        // many APIs return { data: { data: [...], total_pages: X } }
-        const newsItems = apiData?.data ?? apiData ?? [];
+        const apiData = response.data.data ?? response.data
+        const newsItems: NewsItem[] = apiData?.data ?? []
 
         if (pageNumber === 1) {
-          const featured = Array.isArray(newsItems)
-            ? (newsItems.find((item: any) => item.is_featured) || newsItems[0])
-            : null;
+          const featured =
+            newsItems.find(item => item.is_featured) || newsItems[0] || null
 
-          const listNews = Array.isArray(newsItems)
-            ? newsItems.filter((item: any) => item.content_id !== featured?.content_id)
-            : [];
+          const listNews = featured
+            ? newsItems.filter(
+                item => item.content_id !== featured.content_id
+              )
+            : newsItems
 
           set({
             newsList: listNews,
@@ -62,63 +100,63 @@ const useNewsStore = create<NewsState>((set, post) => ({ // renamed 'post' -> 'g
             page: pageNumber,
             totalPages: apiData?.total_pages || 1,
             hasMore: pageNumber < (apiData?.total_pages || 1),
-          });
+          })
         } else {
-          // safe-guard array merging
           set(state => ({
-            newsList: Array.isArray(newsItems) ? [...state.newsList, ...newsItems] : state.newsList,
+            newsList: [...state.newsList, ...newsItems],
             page: pageNumber,
             totalPages: apiData?.total_pages || 1,
             hasMore: pageNumber < (apiData?.total_pages || 1),
-          }));
+          }))
         }
       } else {
-        // API returned status: false -> show message from API if present
-        const message = response.data?.message || 'Failed to fetch news';
-        console.warn('API reported failure:', message);
-        set({ error: message });
+        set({
+          error:
+            response.data?.message || 'Failed to fetch news',
+        })
       }
     } catch (error: any) {
-      console.error('Error fetching news list:', error, error?.response?.data);
-      set({ 
-        error: error.response?.data?.message || error.message || 'Something went wrong' 
-      });
+      set({
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          'Something went wrong',
+      })
     } finally {
-      set({ loading: false });
+      set({ loading: false })
     }
   },
-  
+
   fetchNewsDetails: async (contentId: string) => {
     try {
-      set({ detailsLoading: true, detailsError: null });
-      console.log('Fetching news details for ID:', contentId);
+      set({ detailsLoading: true, detailsError: null })
 
-      // same note as above re: params vs body
       const response = await api.post('/contentinfo/news-details', {
         content_id: contentId,
-      });
-
-      console.log('News details response (raw):', response);
-      console.log('News details response data:', response.data);
+      })
 
       if (response.data?.status) {
-        set({ newsDetails: response.data.data });
+        set({ newsDetails: response.data.data })
       } else {
-        const msg = response.data?.message || 'Failed to fetch news details';
-        console.warn('API reported failure fetching details:', msg);
-        set({ detailsError: msg });
+        set({
+          detailsError:
+            response.data?.message ||
+            'Failed to fetch news details',
+        })
       }
     } catch (error: any) {
-      console.error('Error fetching news details:', error, error?.response?.data);
-      set({ 
-        detailsError: error.response?.data?.message || error.message || 'Something went wrong' 
-      });
+      set({
+        detailsError:
+          error.response?.data?.message ||
+          error.message ||
+          'Something went wrong',
+      })
     } finally {
-      set({ detailsLoading: false });
+      set({ detailsLoading: false })
     }
   },
-  
-  resetNewsList: () => {
+
+  resetNewsList: () =>
     set({
       newsList: [],
       featuredNews: null,
@@ -127,16 +165,14 @@ const useNewsStore = create<NewsState>((set, post) => ({ // renamed 'post' -> 'g
       page: 1,
       hasMore: true,
       totalPages: 1,
-    });
-  },
-  
-  resetNewsDetails: () => {
+    }),
+
+  resetNewsDetails: () =>
     set({
       newsDetails: null,
       detailsLoading: false,
       detailsError: null,
-    });
-  },
-}));
+    }),
+}))
 
-export default useNewsStore;
+export default useNewsStore

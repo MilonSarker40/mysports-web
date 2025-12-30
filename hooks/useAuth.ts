@@ -14,65 +14,57 @@ export function useAuth() {
   const logout = useAuthStore((s) => s.logout);
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const [opt, setOtp] = useState(null);
+  const [otpInfo, setOtpInfo] = useState<any>(null);
 
   /* ----------------------------------
      SEND OTP
   ---------------------------------- */
-  const sendOTP = useCallback(async ({ inputNumber = null } : { inputNumber?: string | null }) => {
-    setIsLoading(true);
+  const sendOTP = useCallback(
+    async ({ inputNumber }: { inputNumber: string }) => {
+      setIsLoading(true);
 
-    let msisdn = inputNumber;
-    let accessToken = 'null';
+      try {
+        const msisdn = inputNumber;
 
-    try {
-      // 1️⃣ Detect Robi SIM
-      if (!inputNumber) {
-        
-      }
-      // 2️⃣ SEND OTP (HEADER + BODY BOTH ✅)
-      const otpRes = await fetch(`${API_BASE}/otp/${msisdn}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OTP_SEND_ACCESSTOKEN}`, // ✅ REQUIRED
-        },
-        body: JSON.stringify({
-          accessinfo: {
-            access_token: process.env.NEXT_PUBLIC_OTP_SEND_ACCESSTOKEN, // ✅ REQUIRED
-            referenceCode: Date.now().toString(),
+        const res = await fetch(`${API_BASE}/otp/${msisdn}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OTP_SEND_ACCESSTOKEN}`,
           },
-        }),
-      });
+          body: JSON.stringify({
+            accessinfo: {
+              access_token: process.env.NEXT_PUBLIC_OTP_SEND_ACCESSTOKEN,
+              referenceCode: Date.now().toString(),
+            },
+          }),
+        });
 
-      if (!otpRes.ok) {
-        throw new Error(`OTP_FAILED_${otpRes.status}`);
+        if (!res.ok) throw new Error("OTP_SEND_FAILED");
+
+        const data = await res.json();
+
+        if (data.result !== "success") {
+          throw new Error("OTP_FAILED");
+        }
+
+        setOtpInfo(data.otp_info);
+
+        localStorage.setItem("msisdn", msisdn);
+        localStorage.removeItem("otp_verified");
+
+        toast.success("OTP sent successfully");
+        return true;
+      } catch (err) {
+        console.error(err);
+        toast.error("OTP send failed");
+        return false;
+      } finally {
+        setIsLoading(false);
       }
-
-      const otpData = await otpRes.json();
-
-      if (otpData.result !== "success") {
-        throw new Error("OTP_FAILED");
-      }
-
-      setOtp(otpData.otp_info);
-
-      // 3️⃣ Save temp session
-      localStorage.setItem("msisdn", msisdn);
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.removeItem("otp_verified");
-
-      toast.success("OTP sent successfully");
-      return true;
-    } catch (err) {
-      console.error(err);
-      toast.error("OTP send failed");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   /* ----------------------------------
      VERIFY OTP
@@ -88,43 +80,43 @@ export function useAuth() {
 
       try {
         const msisdn = localStorage.getItem("msisdn");
-        const accessToken = localStorage.getItem("accessToken");
+        if (!msisdn) throw new Error("SESSION_INVALID");
 
-        if (!msisdn || !accessToken) {
-          throw new Error("SESSION_INVALID");
-        }
-
-        const res = await fetch(`${API_BASE}/otp-validation/${msisdn}/${otp}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OTP_VERIFICATION}`, // ✅ REQUIRED
-          },
-          body: JSON.stringify({
-            accessinfo: {
-              access_token: process.env.NEXT_PUBLIC_OTP_VERIFICATION, // ✅ REQUIRED
-              referenceCode: Date.now().toString(),
+        const res = await fetch(
+          `${API_BASE}/otp-validation/${msisdn}/${otp}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_OTP_VERIFICATION}`,
             },
-          }),
-        });
+            body: JSON.stringify({
+              accessinfo: {
+                access_token: process.env.NEXT_PUBLIC_OTP_VERIFICATION,
+                referenceCode: Date.now().toString(),
+              },
+            }),
+          }
+        );
 
-        const resData = await res.json();
+        const data = await res.json();
 
-        if (resData.message_body !== "success") {
+        if (data.message_body !== "success") {
           toast.error("Wrong OTP");
           return false;
         }
 
-        // ✅ LOGIN SUCCESS
+        // ✅ persist real backend values
         localStorage.setItem("otp_verified", "true");
-        localStorage.setItem("user_uuid", resData.uuid);
-        localStorage.setItem("user_accesstoken", resData.accessToken);
+        localStorage.setItem("user_uuid", data.uuid);
+        localStorage.setItem("user_accesstoken", data.accessToken);
 
-        login(accessToken, {
-          uuid: crypto.randomUUID(),
+        // ✅ LOGIN (DO NOT FORCE subscription false)
+        login(data.accessToken, {
+          uuid: data.uuid,
           operatorname: "robi",
           msisdn,
-          subscription: { subscribed: false },
+          subscription: undefined, // 🔥 IMPORTANT
         });
 
         toast.success("Login successful");
